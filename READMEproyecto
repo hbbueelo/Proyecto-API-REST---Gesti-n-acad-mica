@@ -1,0 +1,96 @@
+# Proyecto API REST - Gestión académica
+
+Aplicación web y API REST desarrolladas con Express y SQLite para administrar usuarios, estudiantes, cursos, inscripciones y calificaciones.
+
+## Integrante
+
+- Nicolas Rueda Gutierrez
+
+## Justificación
+
+El proyecto facilita la organización de la información académica en un solo sistema. Permite consultar estudiantes, cursos e inscripciones, calcular calificaciones y controlar el acceso según el perfil de cada usuario.
+
+## Objetivos
+
+- Desarrollar una aplicación web conectada a una API REST y una base de datos SQLite.
+- Gestionar estudiantes, cursos, inscripciones y calificaciones.
+- Proteger el acceso mediante inicio de sesión, token y perfiles de usuario.
+- Consultar estadísticas académicas de forma sencilla.
+
+## Requerimientos funcionales
+
+- Registrar usuarios e iniciar sesión con nombre de usuario y contraseña.
+- Distinguir entre administrador, que puede gestionar información, y usuario global, que puede consultarla.
+- Permitir al usuario cambiar su contraseña.
+- Registrar, consultar, buscar, actualizar y eliminar estudiantes y cursos.
+- Inscribir estudiantes en cursos y registrar tres calificaciones parciales ponderadas.
+- Calcular la calificación final y consultar notas y estudiantes inscritos.
+- Mostrar estadísticas de estudiantes, cursos, promedios, aprobados y reprobados.
+- Administrar usuarios desde la configuración para el perfil administrador.
+
+## Requerimientos no funcionales
+
+- Guardar la información en SQLite para conservarla entre ejecuciones.
+- Proteger las rutas de la API con tokens y restringir las operaciones según el rol.
+- Almacenar las contraseñas usando hash, no como texto legible.
+- Ofrecer una interfaz web adaptable y sencilla de utilizar.
+- Validar los datos ingresados y comunicar los errores al usuario.
+
+## Inicio rápido
+
+1. Instala las dependencias con `npm install`.
+2. Ejecuta `npm start` o `npm run dev`.
+3. Abre `http://localhost:3000` en el navegador.
+4. En la primera ejecución, el terminal muestra las contraseñas aleatorias de las cuentas iniciales `admin` y `usuario`. Guárdalas. La base queda en `mi-api-personas/bd_personas.sqlite`.
+
+Para definir las contraseñas antes de crear la base de datos, configura `ADMIN_PASSWORD`, `USER_PASSWORD` y `JWT_SECRET` en el entorno. En Windows PowerShell, por ejemplo:
+
+```powershell
+$env:ADMIN_PASSWORD = "UnaClaveSegura"
+$env:USER_PASSWORD = "OtraClaveSegura"
+$env:JWT_SECRET = "UnSecretoLargoYPrivado"
+npm start
+```
+
+La aplicación mantiene las contraseñas con hash scrypt y entrega tokens Bearer firmados, válidos durante ocho horas. Para invalidar todos los tokens después de un reinicio, configura `JWT_SECRET` explícitamente; si no se configura, se crea una clave temporal al iniciar.
+
+## Perfiles
+
+- **Administrador (`admin`)**: consulta y modifica estudiantes, cursos, inscripciones y calificaciones; también administra usuarios.
+- **Usuario global (`user`)**: consulta información y estadísticas, pero no puede realizar operaciones de escritura.
+- El formulario público de registro crea exclusivamente usuarios globales.
+
+## Endpoints principales
+
+Todas las rutas `/api` excepto registro e inicio de sesión requieren `Authorization: Bearer <token>`.
+
+| Método | Endpoint | Acceso |
+| --- | --- | --- |
+| POST | `/api/auth/register` | Público; crea un usuario global |
+| POST | `/api/auth/login` | Público; devuelve token y usuario |
+| GET | `/api/auth/me` | Autenticado |
+| PUT | `/api/auth/password` | Autenticado |
+| GET / POST | `/api/users` | Administrador |
+| GET / PUT / DELETE | `/api/users/:id` | Administrador |
+| GET / POST | `/api/students` | Autenticado / administrador |
+| GET / PUT / DELETE | `/api/students/:id` | Autenticado / administrador |
+| GET / POST | `/api/courses` | Autenticado / administrador |
+| GET / PUT / DELETE | `/api/courses/:id` | Autenticado / administrador |
+| GET / POST | `/api/enrollments` | Autenticado / administrador |
+| DELETE | `/api/enrollments/:id` | Administrador |
+| PUT | `/api/enrollments/:id/grades` | Administrador |
+| GET | `/api/students/:id/grades` | Autenticado |
+| GET | `/api/courses/:id/students` | Autenticado |
+| GET | `/api/stats/dashboard`, `/api/stats/courses` | Autenticado |
+
+Los parciales usan escala de 0 a 5 y sus porcentajes deben sumar 100. La nota final se calcula y se almacena en SQLite; se considera aprobado desde 3.0.
+
+## Organización
+
+- `mi-api-personas/index.js`: rutas REST, autenticación, permisos y entrega de la web.
+- `mi-api-personas/database.js`: conexión SQLite, creación de tablas y cuentas iniciales.
+- `mi-api-personas/public/index.html`: estructura de las pantallas.
+- `mi-api-personas/public/app.js`: navegación y consumo de endpoints con `fetch`.
+- `mi-api-personas/public/styles.css`: presentación adaptable.
+
+La tabla original `Persona` se conserva y sus rutas antiguas están disponibles bajo autenticación.
